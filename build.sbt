@@ -24,5 +24,7 @@ lazy val root = project
       "org.apache.hadoop" % "hadoop-aws" % "3.3.4",
       "org.apache.hadoop" % "hadoop-common" % "3.3.4",
       "org.apache.hadoop" % "hadoop-client" % "3.3.4",
+      "org.postgresql" % "postgresql" % "42.2.18"
+
   )
 )

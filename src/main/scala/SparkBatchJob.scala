@@ -5,13 +5,13 @@ import org.apache.log4j.Logger
 import java.time.format.DateTimeFormatter
 import java.time.LocalDate
 import org.apache.spark.SparkConf
-
+import org.apache.spark.sql.streaming.Trigger
 
 object SparkBatchJob extends App {
   @transient lazy val logger: Logger = Logger.getLogger(getClass.getName)
 
-  val conf = ConfigFactory.load()
 
+  val conf = ConfigFactory.load()
 
   val spark = SparkSession.builder
       .appName("KafkaToS3Batch")
@@ -28,31 +28,37 @@ object SparkBatchJob extends App {
     "kafka.bootstrap.servers" -> conf.getString("kafka.bootstrap.servers"),
     "subscribe" -> conf.getString("kafka.topic.reports"),
     "group.id" -> "batch-group-id",
-    "auto.offset.reset" -> "latest"
+    "auto.offset.reset" -> "earliest"
   )
 
-  import spark.implicits._
-
-  val kafkaDF = spark
-    .read
+  val kafkaDF = spark.readStream
     .format("kafka")
     .options(kafkaParams)
     .load()
 
-  val parsedDF = kafkaDF.selectExpr("CAST(value AS STRING) as json")
-      .as[String]
-      .flatMap(ReportParser.parseReport) // Parse each report string into a Report object
-      .toDF()
+  import spark.implicits._
 
+  val processedDF = kafkaDF.selectExpr("CAST(value AS STRING) as json")
+    .as[String]
+    .flatMap(ReportParser.parseReport) // Assume ReportParser is a custom object that parses the report
+    .toDF()
+  
   
   val currentDate = LocalDate.now
   val year = currentDate.getYear
   val month = currentDate.getMonthValue
   val day = currentDate.getDayOfMonth
   val outputPath = s"s3a://${conf.getString("s3.bucket.name")}/reports/$year/$month/$day/"
-  parsedDF.write.mode("Overwrite").json(outputPath)
-  logger.info(s"Data written to $outputPath")
   
-  
-  spark.stop()
+
+  val query = processedDF.writeStream
+      .outputMode("append")
+      .format("json")
+      .option("path", outputPath)
+      .trigger(Trigger.ProcessingTime("5 minute"))
+      .option("checkpointLocation", outputPath + "checkpoint")
+      .start()
+
+  query.awaitTermination()
+
 }
