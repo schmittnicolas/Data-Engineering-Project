@@ -49,7 +49,7 @@ object DataSimulator extends App {
     producer.send(record)
     println(s"Sent record: $report")
 
-    Thread.sleep(1000)
+    Thread.sleep(10000)
 
   }
 
