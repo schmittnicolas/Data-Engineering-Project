@@ -32,7 +32,7 @@ object KafkaStreamingJob extends App {
   // Define your filtering logic
   val filteredReportsStream: KStream[String, String] = reportsStream.filter { (_, reportString) =>
     val report = ReportParser.parseReport(reportString)
-    report.exists(_.alcoholLevel > 1.5)
+    report.exists(_.alcoholLevel > 2)
   }
 
   // Print the filtered stream to console (for debugging purposes)
