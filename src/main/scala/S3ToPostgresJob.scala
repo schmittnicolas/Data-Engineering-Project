@@ -28,7 +28,7 @@ object S3ToPostgresJob extends App{
     val day = f"${now.getDayOfMonth}%02d"
 
     // Construct S3 path
-    val s3Path = s"s3a://dataingproject/reports/2024/6/30/part-00000-638698d5-f87d-421a-bee3-f68119534441-c000.json"
+    val s3Path = f"s3a://dataingproject/reports/${year}/$month/$day/*.json"
 
 
     

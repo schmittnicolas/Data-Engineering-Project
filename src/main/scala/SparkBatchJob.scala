@@ -44,10 +44,12 @@ object SparkBatchJob extends App {
     .toDF()
   
   
-  val currentDate = LocalDate.now
-  val year = currentDate.getYear
-  val month = currentDate.getMonthValue
-  val day = currentDate.getDayOfMonth
+  val now = LocalDate.now()
+  val year = now.getYear
+  val month = f"${now.getMonthValue}%02d"
+  val day = f"${now.getDayOfMonth}%02d"
+
+
   val outputPath = s"s3a://${conf.getString("s3.bucket.name")}/reports/$year/$month/$day/"
   
 
